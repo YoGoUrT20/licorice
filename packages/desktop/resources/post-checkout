@@ -1,0 +1,33 @@
+#!/bin/sh
+# Licorice Global Hook
+# Notifies Licorice Desktop about repository changes
+
+prev=$1
+new=$2
+flag=$3
+
+# Flag 1 means changing branches
+if [ "$flag" = "1" ]; then
+    # DEBUG LOGGING
+    LOGFILE="$HOME/.licorice/hook.log"
+    echo "$(date) - Post-checkout triggered. Flag: $flag" >> "$LOGFILE"
+
+    # Get current working directory
+    # Try to Convert to Windows path if we are in Git Bash/MinGW
+    if command -v cygpath >/dev/null 2>&1; then
+        REPO_PATH=$(cygpath -w "$(pwd)")
+    else
+        # Fallback to standard pwd (might be /c/Users/...)
+        REPO_PATH=$(pwd)
+    fi
+    
+    echo "Detected Path: $REPO_PATH" >> "$LOGFILE"
+
+    # Escape backslashes for JSON (C:\Path -> C:\\Path)
+    # Using sed to replace \ with \\
+    JSON_PATH=$(echo "$REPO_PATH" | sed 's/\\/\\\\/g')
+
+    # Send notification to Licorice Desktop (silently, don't block)
+    echo "Sending request with path: $JSON_PATH" >> "$LOGFILE"
+    curl -v -X POST -H "Content-Type: application/json" -d "{\"path\": \"$JSON_PATH\"}" http://localhost:21337/api/notify >> "$LOGFILE" 2>&1 &
+fi

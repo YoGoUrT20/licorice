@@ -1,0 +1,16 @@
+{
+    "name": "licorice-monorepo",
+    "private": true,
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "bun run --filter '*' dev",
+        "build": "bun run --filter '*' build",
+        "test": "bun run --filter '*' test"
+    },
+    "devDependencies": {
+        "typescript": "^5.3.3",
+        "@types/node": "^20.11.24"
+    }
+}

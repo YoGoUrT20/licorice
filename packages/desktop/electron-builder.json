@@ -1,0 +1,35 @@
+{
+    "productName": "Licorice",
+    "appId": "com.licorice.app",
+    "directories": {
+        "output": "release/${version}"
+    },
+    "files": [
+        "dist/**/*",
+        "dist-electron/**/*"
+    ],
+    "win": {
+        "target": [
+            {
+                "target": "nsis",
+                "arch": [
+                    "x64"
+                ]
+            },
+            {
+                "target": "portable",
+                "arch": [
+                    "x64"
+                ]
+            }
+        ],
+        "artifactName": "${productName}-${target}-${version}.${ext}"
+    },
+    "nsis": {
+        "oneClick": false,
+        "allowToChangeInstallationDirectory": true
+    },
+    "portable": {
+        "artifactName": "${productName}-Portable-${version}.${ext}"
+    }
+}

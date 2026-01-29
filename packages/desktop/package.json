@@ -1,0 +1,35 @@
+{
+    "name": "@licorice/desktop",
+    "version": "0.0.1",
+    "type": "module",
+    "main": "electron/main.ts",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "dist": "vite build && electron-builder"
+    },
+    "dependencies": {
+        "@licorice/core": "*",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "clsx": "^2.1.0",
+        "tailwind-merge": "^2.2.1",
+        "lucide-react": "^0.344.0"
+    },
+    "devDependencies": {
+        "@types/react": "^18.2.56",
+        "@types/react-dom": "^18.2.19",
+        "@vitejs/plugin-react": "^4.2.1",
+        "autoprefixer": "^10.4.17",
+        "electron": "^40.0.0",
+        "electron-builder": "^26.4.0",
+        "esbuild": "^0.27.2",
+        "postcss": "^8.4.35",
+        "tailwindcss": "^3.4.1",
+        "typescript": "^5.3.3",
+        "vite": "^7.3.1",
+        "vite-plugin-electron": "^0.28.2",
+        "vite-plugin-electron-renderer": "^0.14.5"
+    }
+}
