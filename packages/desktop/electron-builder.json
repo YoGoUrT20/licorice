@@ -1,6 +1,7 @@
 {
     "productName": "Licorice",
     "appId": "com.licorice.app",
+    "electronVersion": "40.0.0",
     "directories": {
         "output": "release/${version}"
     },
