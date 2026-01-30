@@ -3,6 +3,10 @@
     "version": "0.0.1",
     "description": "Licorice Desktop Application",
     "author": "Licorice Team",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/YoGoUrT20/licorice.git"
+    },
     "type": "module",
     "main": "electron/main.ts",
     "scripts": {

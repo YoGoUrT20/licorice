@@ -32,5 +32,12 @@
     },
     "portable": {
         "artifactName": "${productName}-Portable-${version}.${ext}"
-    }
+    },
+    "publish": [
+        {
+            "provider": "github",
+            "owner": "YoGoUrT20",
+            "repo": "licorice"
+        }
+    ]
 }

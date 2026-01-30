@@ -34,6 +34,11 @@ declare global {
                 onExit: (callback: (data: { id: string, code: number }) => void) => () => void,
                 start: (id: string, cmd: string, args: string[], cwd: string) => Promise<boolean>,
                 stop: (id: string) => Promise<void>
+            },
+            settings: {
+                get: (key: string) => Promise<any>,
+                getAll: () => Promise<any>,
+                set: (key: string, value: any) => Promise<void>
             }
         }
     }

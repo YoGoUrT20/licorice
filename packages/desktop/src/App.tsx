@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { BranchList } from './components/BranchList'
 import { Terminal } from './components/Terminal'
 import { RepoSelector } from './components/RepoSelector'
+import { SettingsModal } from './components/SettingsModal'
 
 function App() {
     const [currentPath, setCurrentPath] = useState<string | null>(null);
     const [activeWorktree, setActiveWorktree] = useState<string | null>(null);
     const [recentRepos, setRecentRepos] = useState<string[]>([]);
     const [autoStart, setAutoStart] = useState(true);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     useEffect(() => {
         // Load recent repos
@@ -113,6 +115,12 @@ function App() {
                     onAdd={handleAddRepo}
                     autoStartEnabled={autoStart}
                     onToggleAutoStart={handleToggleAutoStart}
+                    onOpenSettings={() => setIsSettingsOpen(true)}
+                />
+
+                <SettingsModal
+                    isOpen={isSettingsOpen}
+                    onClose={() => setIsSettingsOpen(false)}
                 />
 
                 <div className="flex flex-col gap-[1px] bg-steel-edge border border-steel-edge shadow-[0_20px_50px_rgba(0,0,0,0.5)]">

@@ -2,7 +2,7 @@ import http from 'http';
 
 const PORT = 21337;
 
-export function startServer(onRepoChange: (path: string) => void) {
+export function startServer(onRepoChange: (path: string, url?: string) => void) {
     const server = http.createServer((req, res) => {
         // Enable CORS
         res.setHeader('Access-Control-Allow-Origin', '*');
@@ -24,8 +24,8 @@ export function startServer(onRepoChange: (path: string) => void) {
                 try {
                     const data = JSON.parse(body);
                     if (data && data.path) {
-                        console.log('Received repo change notification:', data.path);
-                        onRepoChange(data.path);
+                        console.log('Received repo change notification:', data.path, data.url);
+                        onRepoChange(data.path, data.url);
                         res.writeHead(200, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify({ success: true }));
                     } else {

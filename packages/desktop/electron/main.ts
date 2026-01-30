@@ -1,4 +1,10 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron'
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, Notification, shell } from 'electron'
+
+// Fix for Windows Notifications showing 'electron.app.Electron'
+// Must match appId in electron-builder.json
+if (process.platform === 'win32') {
+    app.setAppUserModelId('com.licorice.app');
+}
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Watcher, WorktreeManager, ProcessManager } from '@licorice/core'
@@ -22,6 +28,28 @@ let watcher: Watcher | null = null;
 let worktreeManager: WorktreeManager | null = null;
 const processManager = new ProcessManager(); // Global process manager is fine
 let server: ReturnType<typeof import('http')['createServer']> | null = null;
+
+// Allow global extension
+declare global {
+    var lastNotifiedUrl: string | null;
+}
+
+import { Store } from './store.ts';
+const settingsStore = new Store({
+    name: 'settings',
+    defaults: {
+        runOnStartup: false,
+        closeToTray: true,
+        notifyOnServerStart: true,
+        openBrowserOnStart: true
+    }
+});
+
+// Sync startup settings
+app.setLoginItemSettings({
+    openAtLogin: settingsStore.get('runOnStartup'),
+    path: process.execPath
+});
 
 async function initializeServices(projectRoot: string) {
     if (watcher) {
@@ -101,11 +129,13 @@ function createWindow() {
     })
 
     win.on('close', (event) => {
-        if (!isQuitting) {
+        const closeToTray = settingsStore.get('closeToTray');
+        if (!isQuitting && closeToTray) {
             event.preventDefault();
             win?.hide();
             return false;
         }
+        // If NOT closeToTray, we exit normally, which triggers window-all-closed -> quit (except Mac)
     });
 
     win.webContents.on('did-finish-load', () => {
@@ -118,6 +148,46 @@ function createWindow() {
     // Process Events (Global)
     processManager.on('output', (data) => {
         win?.webContents.send('process-output', data);
+
+        // Server Detection Logic
+        // Look for: "Local: http://localhost:PORT" or "http://localhost:PORT"
+        if (data && data.data) {
+            const str = data.data.toString();
+            // Regex to find http://localhost URLs
+            // Vite: "  Local:   http://localhost:5173/"
+            // Next: "- Local:        http://localhost:3000"
+            const urlMatch = str.match(/http:\/\/localhost:[0-9]+/);
+
+            if (urlMatch) {
+                const url = urlMatch[0];
+                console.log(`[Main] Detected Server URL: ${url}`);
+
+                // Debounce/Check if we already notified for this process/url recently?
+                // For now, simplistically fire if settings allow. 
+                // We assume the user won't get spam within the same millisecond, but to avoid multi-line spam:
+                // We could use a Set of notified items or just fire.
+
+                // We will use a simple cache to avoid spamming the same URL
+                if (global.lastNotifiedUrl !== url) {
+                    global.lastNotifiedUrl = url;
+
+                    if (settingsStore.get('notifyOnServerStart')) {
+                        new Notification({
+                            title: 'Web Server Started',
+                            body: `Available at: ${url}`,
+                            icon: path.join(process.env.VITE_PUBLIC as string, 'icon.png')
+                        }).show();
+                    }
+
+                    if (settingsStore.get('openBrowserOnStart')) {
+                        shell.openExternal(url);
+                    }
+
+                    // Reset cache after 10 seconds to allow re-notification if restarted
+                    setTimeout(() => { global.lastNotifiedUrl = null; }, 10000);
+                }
+            }
+        }
     });
     processManager.on('exit', (data) => {
         win?.webContents.send('process-exit', data);
@@ -297,6 +367,22 @@ ipcMain.handle('process:stop', async (_, id) => {
     return processManager.stop(id);
 });
 
+// Settings Handlers
+ipcMain.handle('settings:get', (_, key) => settingsStore.get(key));
+ipcMain.handle('settings:getAll', () => settingsStore.getAll());
+ipcMain.handle('settings:set', (_, key, value) => {
+    settingsStore.set(key, value);
+
+    // Side effects
+    if (key === 'runOnStartup') {
+        app.setLoginItemSettings({
+            openAtLogin: value,
+            path: process.execPath
+        });
+    }
+    return true;
+});
+
 app.whenReady().then(async () => {
     // Explicitly setup Bun environment on startup
     try {
@@ -322,8 +408,8 @@ app.whenReady().then(async () => {
     createWindow();
 
     // Start notification server
-    server = startServer((repoPath) => {
-        console.log("Received repo change notification:", repoPath);
+    server = startServer((repoPath, url) => {
+        console.log("Received repo change notification:", repoPath, url);
 
         // Normalize path if it comes from Git Bash (e.g. /c/Users/...)
         // Simple regex to replace leading /c/ with C:/ (and other drive letters)
@@ -338,6 +424,8 @@ app.whenReady().then(async () => {
 
         console.log("Received path:", normalizedPath);
 
+        // Notification moved to after worktree resolution to get full context
+
         // Resolve the "Main" worktree if we are inside a linked worktree (like Cursor agent worktrees)
         // Command: git -C <path> worktree list --porcelain
         // The first 'worktree' entry is ALWAYS the main repository root.
@@ -348,6 +436,34 @@ app.whenReady().then(async () => {
                 if (firstWorktreeLine) {
                     const rootPath = firstWorktreeLine.substring(9).trim();
                     console.log("Resolved Main Repository Root:", rootPath);
+
+                    // Show notification with context
+                    // ONLY Notify on Repo Change if we want that... 
+                    // User requested "Notification on Web Server Launch", which we now handle via process output.
+                    // The previous "Licorice Server Detected" here was misleading. 
+                    // We can keep a subtle "Switched to..." notification or remove it.
+                    // For now, removing the misleading notification to avoid confusion with the REAL server start.
+                    /*
+                   if (settingsStore.get('notifyOnServerStart')) {
+                       const repoName = path.basename(rootPath);
+                       const worktreeName = path.basename(normalizedPath);
+                       const body = (normalizedPath === rootPath) 
+                           ? `Repo: ${repoName}` 
+                           : `${repoName} | ${worktreeName}`;
+
+                       new Notification({
+                           title: 'Repository Switched',
+                           body: body,
+                           icon: path.join(process.env.VITE_PUBLIC as string, 'icon.png')
+                       }).show();
+                   }
+                   */
+
+                    // We definitely don't want to try opening a browser here unless we have a URL from the hook (which we don't)
+                    if (settingsStore.get('openBrowserOnStart') && url) {
+                        shell.openExternal(url);
+                    }
+
                     return rootPath;
                 }
                 return normalizedPath;

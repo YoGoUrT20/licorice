@@ -62,5 +62,10 @@ contextBridge.exposeInMainWorld('licorice', {
         },
         start: (id: string, cmd: string, args: string[], cwd: string) => ipcRenderer.invoke('process:start', { id, cmd, args, cwd }),
         stop: (id: string) => ipcRenderer.invoke('process:stop', id)
+    },
+    settings: {
+        get: (key: string) => ipcRenderer.invoke('settings:get', key),
+        getAll: () => ipcRenderer.invoke('settings:getAll'),
+        set: (key: string, value: any) => ipcRenderer.invoke('settings:set', key, value),
     }
 })

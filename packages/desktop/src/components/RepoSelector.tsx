@@ -1,4 +1,4 @@
-import { FolderPlus } from 'lucide-react'
+import { FolderPlus, Settings } from 'lucide-react'
 
 interface Props {
     currentPath: string | null;
@@ -7,9 +7,10 @@ interface Props {
     onAdd: () => void;
     autoStartEnabled: boolean;
     onToggleAutoStart: (enabled: boolean) => void;
+    onOpenSettings: () => void;
 }
 
-export function RepoSelector({ currentPath, recentRepos, onSelect, onAdd, autoStartEnabled, onToggleAutoStart }: Props) {
+export function RepoSelector({ currentPath, recentRepos, onSelect, onAdd, autoStartEnabled, onToggleAutoStart, onOpenSettings }: Props) {
     const getRepoName = (path: string) => {
         // Handle windows/unix paths
         const normalized = path.replace(/\\/g, '/');
@@ -56,6 +57,14 @@ export function RepoSelector({ currentPath, recentRepos, onSelect, onAdd, autoSt
                         <div className="w-11 h-6 bg-steel-edge rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-steel-light after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-copper peer-checked:after:bg-white peer-checked:shadow-[0_0_10px_rgba(197,142,101,0.5)]"></div>
                     </div>
                 </label>
+
+                <button
+                    onClick={onOpenSettings}
+                    className="p-2 text-steel-light hover:text-accent-copper transition-colors"
+                    title="Settings"
+                >
+                    <Settings className="w-5 h-5" />
+                </button>
 
                 <button
                     onClick={onAdd}
