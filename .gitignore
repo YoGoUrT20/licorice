@@ -5,3 +5,11 @@ dist
 /packages/desktop/dist-electron
 *.log
 *.tsbuildinfo
+*.pak
+*.exe
+*.yml
+*.dll
+*.dat
+*.asar
+*.bin
+*.blockmap

@@ -23,10 +23,10 @@
                     "x64"
                 ]
             }
-        ],
-        "artifactName": "${productName}-${target}-${version}.${ext}"
+        ]
     },
     "nsis": {
+        "artifactName": "${productName}-Setup-${version}.${ext}",
         "oneClick": false,
         "allowToChangeInstallationDirectory": true
     },

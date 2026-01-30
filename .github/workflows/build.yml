@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - master
+  workflow_dispatch:
 
 jobs:
   build:
@@ -31,7 +32,6 @@ jobs:
         run: bun run --filter @licorice/core build
 
       - name: Build and Package Desktop
-        working-directory: packages/desktop
         run: bun run dist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -40,4 +40,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Licorice-Windows-Installer
-          path: packages/desktop/release/*.exe
+          path: packages/desktop/release/**/*.exe
